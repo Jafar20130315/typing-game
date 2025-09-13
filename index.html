@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>FASTWRITE</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: #111; color: #eee;
+      display: flex; flex-direction: column;
+      align-items: center;
+    }
+    header {
+      width: 100%;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #222;
+    }
+    header h1 { margin: 0; color: #00ffcc; }
+    .controls {
+      display: flex; gap: 15px; align-items: center;
+    }
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #6e8efb, #a777e3);
+      color: #fff;
+    }
+    select option {
+      background: #222;
+      color: #fff;
+      padding: 8px;
+    }
+    button {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #00ffcc;
+      color: #111;
+      font-weight: bold;
+    }
+    #words {
+      margin: 20px;
+      max-width: 800px;
+      font-size: 28px;
+      line-height: 2.2rem;
+      text-align: left;
+      overflow: hidden;   /* scroll yo'q */
+      transition: all 0.5s ease; /* smooth animatsiya */
+    }
+    .word { margin-right: 10px; display: inline-block; }
+    .correct { color: #0f0; }
+    .wrong { color: #f00; }
+    .active { text-decoration: underline; }
+    #stats {
+      margin-top: 20px;
+      display: flex; gap: 25px;
+      font-size: 18px;
+    }
+    .light { background: #f7f7f7; color: #222; }
+    .light header { background: #ddd; }
+
+    /* Modal */
+    #resultModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      color: #fff;
+      width: 300px;
+      animation: fadeIn 0.5s ease;
+    }
+    .close {
+      float: right;
+      cursor: pointer;
+      font-size: 20px;
+      color: #ff4444;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: scale(0.9);}
+      to {opacity: 1; transform: scale(1);}
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>FASTWRITE</h1>
+    <div class="controls">
+      <select id="timeSelect">
+        <option value="30">30s</option>
+        <option value="60">60s</option>
+        <option value="120">120s</option>
+        <option value="custom">Custom</option>
+        <option value="infinite">∞ Infinite</option>
+      </select>
+      <input type="number" id="customTime" placeholder="Sekund kiriting" style="display:none; width:120px; padding:5px;">
+      <button id="themeToggle">Dark/Light</button>
+      <button id="restartBtn">Restart</button>
+    </div>
+  </header>
+
+  <div id="words"></div>
+
+  <div id="stats">
+    <div>⏱ Time: <span id="timer">0</span></div>
+    <div>⚡ WPM: <span id="wpm">0</span></div>
+    <div>🎯 Accuracy: <span id="accuracy">100</span>%</div>
+  </div>
+
+  <!-- Modal natija -->
+  <div id="resultModal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Natijalar</h2>
+      <p>⏱ Time: <span id="resTime">0</span>s</p>
+      <p>⚡ WPM: <span id="resWpm">0</span></p>
+      <p>🎯 Accuracy: <span id="resAcc">0</span>%</p>
+      <p>✅ To'g'ri so'zlar: <span id="resCorrect">0</span></p>
+      <p>❌ Noto'g'ri so'zlar: <span id="resWrong">0</span></p>
+      <p>🔤 Harflar: <span id="resChars">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    const wordList = [
+      "salom","hello","kitob","book","maktab","school","dunyo","world",
+      "tez","fast","sekin","slow","hayot","life","do'st","friend",
+      "kod","code","o'qituvchi","teacher","bilim","knowledge",
+      "ona","mother","father","ota","yulduz","star","sky","osmon"
+    ];
+
+    const wordsDiv = document.getElementById("words");
+    const timerEl = document.getElementById("timer");
+    const wpmEl = document.getElementById("wpm");
+    const accEl = document.getElementById("accuracy");
+    const timeSelect = document.getElementById("timeSelect");
+    const restartBtn = document.getElementById("restartBtn");
+    const themeToggle = document.getElementById("themeToggle");
+    const customTimeInput = document.getElementById("customTime");
+
+    const modal = document.getElementById("resultModal");
+    const closeModal = document.querySelector(".close");
+    const resTime = document.getElementById("resTime");
+    const resWpm = document.getElementById("resWpm");
+    const resAcc = document.getElementById("resAcc");
+    const resCorrect = document.getElementById("resCorrect");
+    const resWrong = document.getElementById("resWrong");
+    const resChars = document.getElementById("resChars");
+
+    let timeLeft = 30;
+    let timer;
+    let started = false;
+    let currentIndex = 0;
+    let correctChars = 0, wrongChars = 0, totalChars = 0;
+    let correctWords = 0, wrongWords = 0;
+
+    function generateWords() {
+      wordsDiv.innerHTML = "";
+      for (let i = 0; i < 40; i++) {
+        let span = document.createElement("span");
+        span.className = "word";
+        span.textContent = wordList[Math.floor(Math.random() * wordList.length)];
+        wordsDiv.appendChild(span);
+      }
+      wordsDiv.firstChild.classList.add("active");
+    }
+
+    function startTimer() {
+      if (timeSelect.value === "infinite") return;
+      if (timeSelect.value === "custom") {
+        timeLeft = parseInt(customTimeInput.value) || 30;
+      } else {
+        timeLeft = parseInt(timeSelect.value);
+      }
+      timerEl.textContent = timeLeft;
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          document.removeEventListener("keydown", keyHandler);
+          showResults();
+        }
+      }, 1000);
+    }
+
+    function keyHandler(e) {
+      if (!started) {
+        started = true;
+        startTimer();
+      }
+      const activeWord = wordsDiv.children[currentIndex];
+      if (!activeWord) return;
+
+      let expected = activeWord.textContent;
+      let typed = activeWord.dataset.typed || "";
+
+      if (e.key === " ") {
+        if (typed === expected) {
+          activeWord.classList.add("correct");
+          correctChars += expected.length;
+          correctWords++;
+        } else {
+          activeWord.classList.add("wrong");
+          wrongChars += expected.length;
+          wrongWords++;
+        }
+        totalChars += expected.length;
+        activeWord.classList.remove("active");
+        currentIndex++;
+        if (wordsDiv.children[currentIndex]) {
+          wordsDiv.children[currentIndex].classList.add("active");
+        } else {
+          generateWords();
+          currentIndex = 0;
+          wordsDiv.children[0].classList.add("active");
+        }
+        updateStats();
+      } else if (e.key === "Backspace") {
+        typed = typed.slice(0, -1);
+        activeWord.dataset.typed = typed;
+      } else if (e.key.length === 1) {
+        typed += e.key;
+        activeWord.dataset.typed = typed;
+      }
+
+      // highlight letters + all wrong if mistake
+      let display = "";
+      let wrongFound = false;
+      for (let i = 0; i < expected.length; i++) {
+        if (i < typed.length) {
+          if (expected[i] === typed[i] && !wrongFound) {
+            display += `<span style="color:#0f0">${expected[i]}</span>`;
+          } else {
+            wrongFound = true;
+            display += `<span style="color:#f00">${expected[i]}</span>`;
+          }
+        } else {
+          display += expected[i];
+        }
+      }
+      activeWord.innerHTML = display;
+    }
+
+    function updateStats() {
+      let minutes = (parseInt(timeSelect.value) - timeLeft) / 60;
+      if (minutes <= 0) minutes = 1/60;
+      let wpm = Math.round((correctChars / 5) / minutes);
+      let accuracy = Math.round((correctChars / (correctChars + wrongChars)) * 100);
+      wpmEl.textContent = wpm;
+      accEl.textContent = isNaN(accuracy) ? 0 : accuracy;
+    }
+
+    function showResults() {
+      resTime.textContent = timeSelect.value === "infinite" ? "∞" : (timeSelect.value === "custom" ? customTimeInput.value : timeSelect.value);
+      resWpm.textContent = wpmEl.textContent;
+      resAcc.textContent = accEl.textContent;
+      resCorrect.textContent = correctWords;
+      resWrong.textContent = wrongWords;
+      resChars.textContent = correctChars + wrongChars;
+      modal.style.display = "flex";
+    }
+
+    restartBtn.onclick = () => {
+      clearInterval(timer);
+      started = false;
+      currentIndex = 0;
+      correctChars = wrongChars = totalChars = 0;
+      correctWords = wrongWords = 0;
+      timerEl.textContent = "0";
+      wpmEl.textContent = "0";
+      accEl.textContent = "100";
+      generateWords();
+      document.addEventListener("keydown", keyHandler);
+    };
+
+    themeToggle.onclick = () => {
+      document.body.classList.toggle("light");
+    };
+
+    closeModal.onclick = () => {
+      modal.style.display = "none";
+    };
+
+    timeSelect.addEventListener("change", () => {
+      if (timeSelect.value === "custom") {
+        customTimeInput.style.display = "inline-block";
+      } else {
+        customTimeInput.style.display = "none";
+      }
+    });
+
+    // init
+    generateWords();
+    document.addEventListener("keydown", keyHandler);
+  </script>
+
+</body>
+</html>
