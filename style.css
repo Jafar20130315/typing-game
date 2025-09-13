@@ -1,0 +1,81 @@
+:root{
+  --bg:#061026; --panel:#071428; --muted:#94a3b8;
+  --accent1:#6e8efb; --accent2:#a777e3; --good:#10b981; --bad:#ef4444;
+  --card:#0b1220; --glass: rgba(255,255,255,0.03);
+  --glass-2: rgba(255,255,255,0.02);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh;
+  font-family:Inter,system-ui,Arial;
+  background:linear-gradient(180deg,var(--bg),#02111a);
+  color:#e6eef8;
+  display:flex;justify-content:center;
+}
+.app{width:100%;max-width:1100px;margin:28px;}
+
+/* Top bar */
+.topBar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 8px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)}
+.logoWrap{flex:1}
+.logo{margin:0;font-size:20px;font-weight:700; /* moved right */ transform: translateX(14px); color:var(--accent2); letter-spacing:0.6px}
+.controls{display:flex;gap:12px;align-items:center}
+.selectWrap{display:flex;align-items:center;gap:8px}
+.label{font-size:13px;color:var(--muted)}
+.timeSelect{
+  padding:8px 10px;border-radius:8px;border:0;outline:none;background: linear-gradient(135deg,var(--accent1),var(--accent2)); color:#fff; font-weight:600;
+  box-shadow: 0 6px 18px rgba(92,33,182,0.12);
+}
+.timeSelect option{background:#0b1220;color:#fff}
+.customTime{display:none;padding:8px;border-radius:8px;border:0;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.04)}
+
+/* Layout */
+.mainLayout{display:grid;grid-template-columns:1fr 300px;gap:18px;margin-top:16px}
+@media (max-width:980px){.mainLayout{grid-template-columns:1fr} .rightCol{order:2}}
+
+/* Panels */
+.panel{background:var(--panel);padding:14px;border-radius:10px;min-height:220px;box-shadow:0 8px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)}
+.hud{display:flex;gap:12px;justify-content:center;margin-bottom:12px;align-items:center}
+.stat{background:var(--glass-2);padding:10px 12px;border-radius:8px;text-align:center;min-width:90px}
+.stat strong{display:block;font-size:18px}
+.muted{font-size:13px;color:var(--muted)}
+
+/* words area */
+.wordsArea{
+  height:220px; overflow:hidden; padding:16px; border-radius:8px;
+  font-size:28px; line-height:2.2; word-wrap:break-word; position:relative;
+  transition: transform 0.45s ease, opacity 0.35s ease;
+}
+
+/* single word & letters */
+.word{display:inline-block;padding:0 6px;border-radius:6px;user-select:none;transition: transform 0.25s ease}
+.word .letter{display:inline-block; transition: color 0.18s linear, transform 0.15s ease}
+.word.active{background:linear-gradient(90deg, rgba(124,58,237,0.08), rgba(92,33,182,0.04));box-shadow:inset 0 -8px 30px rgba(124,58,237,0.02)}
+.word.correct .letter{color:var(--good)}
+.word.incorrect .letter{color:var(--bad)}
+
+/* hint */
+.hint{margin-top:10px;text-align:center;color:var(--muted);font-size:13px}
+
+/* right column small grid */
+.smallGrid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:8px;background:rgba(255,255,255,0.01);border-radius:8px}
+
+/* buttons */
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:inherit;cursor:pointer}
+.btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;border:0}
+
+/* modal */
+.modalHidden{display:none}
+.modalVisible{display:flex;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:60}
+.modalCard{width:92%;max-width:520px;background:linear-gradient(180deg,#071023,#081228);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);animation:modalPop 350ms ease}
+@keyframes modalPop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.modalHeader{display:flex;justify-content:space-between;align-items:center}
+.modalClose{background:transparent;border:0;color:var(--muted);font-size:20px;cursor:pointer}
+.modalGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.mItem{background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;text-align:center}
+.modalFooter{text-align:center;margin-top:12px}
+
+/* caret animation example (if enabled later) */
+.caret{display:inline-block;width:2px;background:linear-gradient(180deg,#fff,rgba(255,255,255,0.7));height:1.2em;vertical-align:middle;margin-left:6px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
